@@ -1,0 +1,49 @@
+resources:
+  - name: cloudcasa-role
+    type: gcp-types/iam-v1:projects.roles
+    properties:
+      parent: projects/{{ env["project"] }}
+      roleId: CloudCasa
+      role:
+        title: CloudCasa
+        description: Add some description
+        stage: ALPHA
+        includedPermissions:
+          - container.clusters.create
+          - container.clusters.delete
+          - container.clusters.get
+          - container.clusters.getCredentials
+          - container.clusters.list
+          - container.serviceAccounts.create
+          - container.serviceAccounts.get
+          - container.serviceAccounts.update
+          - container.deployments.create
+          - container.deployments.get
+          - container.deployments.update
+          - container.namespaces.create
+          - container.namespaces.get
+          - container.namespaces.update
+          - container.clusterRoleBindings.create
+          - container.clusterRoleBindings.get
+          - container.clusterRoleBindings.update
+          - container.clusterRoles.bind
+          - container.clusterRoles.create
+          - container.clusterRoles.escalate
+          - container.operations.get
+          - compute.regions.get
+          - compute.regions.list
+          - compute.zones.get
+          - compute.zones.list
+          - compute.machineTypes.get
+          - compute.machineTypes.list
+          - iam.serviceAccounts.actAs
+
+  - name: cloudcasa-iam-member-project
+    type: gcp-types/cloudresourcemanager-v1:virtual.projects.iamMemberBinding
+    properties:
+      resource: {{ env["project"] }}
+      member: "serviceAccount:cloudcasa-poc@wired-ripsaw-330217.iam.gserviceaccount.com"
+      role: projects/{{ env["project"] }}/roles/CloudCasa
+    metadata:
+      dependsOn:
+        - cloudcasa-role
