@@ -8,10 +8,12 @@ NC='\033[0m';
 CC_TEMPLATE_FILE=cloudcasa_gcp_deployment.jinja;
 GCP_PROJECT_ID=${DEVSHELL_PROJECT_ID};
 CLOUDACCOUNT_ID=$1;
+TIMESTAMP=$(date +%s)
+DEPLOYMENT_NAME=cloudcasa-deployment-${TIMESTAMP}
 
 CC_APISERVER_URL="https://api.staging.cloudcasa.io";
 CC_CALLBACK_URI="${CC_APISERVER_URL}/api/v1/cloudaccounts/${CLOUDACCOUNT_ID}/action/move-to-active";
-CC_CALLBACK_BODY="{\"project_id\": \"${GCP_PROJECT_ID}\", \"template_version\": \"1.0.0\"}"
+CC_CALLBACK_BODY="{\"project_id\": \"${GCP_PROJECT_ID}\", \"template_version\": \"1.0.0\", \"deployment_name\": \"${DEPLOYMENT_NAME}\"}"
 CC_CALLBACK_HEADERS="Content-Type: application/json";
 
 if [[ -z ${GCP_PROJECT_ID} ]]; then
@@ -32,8 +34,7 @@ fi
 
 
 printf "[INFO] Deploying CloudCasa custom role in project...\n";
-TIMESTAMP=$(date +%s)
-gcloud deployment-manager deployments create cloudcasa-deployment-${TIMESTAMP} --template ${CC_TEMPLATE_FILE}
+gcloud deployment-manager deployments create ${DEPLOYMENT_NAME} --template ${CC_TEMPLATE_FILE}
 if [ $? -ne 0 ]; then
 	printf "${RED}[ERROR] The CloudCasa deployed has failed.${NC} Please check with the tutorial if all required APIs were enabled.\n";
 	exit 1;
