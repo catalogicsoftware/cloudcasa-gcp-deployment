@@ -9,7 +9,7 @@ gcloud config set project <project-id>
 ```
 
 ## Enable the required APIs
-Once the project ID is set, [**enable the required APIs**](https://console.cloud.google.com/flows/enableapi?apiid=iam.googleapis.com,deploymentmanager.googleapis.com,cloudresourcemanager.googleapis.com). These are the iam, deploymentmanager, and cloudresourcemanager APIs.
+Once the project ID is set, [**enable the required APIs**](https://console.cloud.google.com/flows/enableapi?apiid=iam.googleapis.com,deploymentmanager.googleapis.com,compute.googleapis.com,cloudresourcemanager.googleapis.com). These are the iam, deploymentmanager, computeengine, and cloudresourcemanager APIs.
 
 
 ## Assign the "Owner" role to the "Google APIs Service Agent" principal
