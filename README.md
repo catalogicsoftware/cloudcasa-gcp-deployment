@@ -7,9 +7,13 @@ Select the Google Cloud project that you want to connect to with CloudCasa:
 ```
 gcloud config set project <project-id>
 ```
+You can list projects with the following command:
+```
+gcloud projects list
+```
 
 ## Enable the required APIs
-Once the project ID is set, [**enable the required APIs**](https://console.cloud.google.com/flows/enableapi?apiid=iam.googleapis.com,deploymentmanager.googleapis.com,compute.googleapis.com,cloudresourcemanager.googleapis.com). These are the iam, deploymentmanager, computeengine, and cloudresourcemanager APIs.
+Once the project ID is set, [**enable the required APIs**](https://console.cloud.google.com/flows/enableapi?apiid=iam.googleapis.com,deploymentmanager.googleapis.com,compute.googleapis.com,cloudresourcemanager.googleapis.com). These are the IAM , Deployment Manager, Compute Engine, and Cloud Resource Manager APIs.
 
 
 ## Assign the "Owner" role to the "Google APIs Service Agent" principal

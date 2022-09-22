@@ -20,7 +20,38 @@ if [[ -z ${gcp_project_id} ]]; then
 	exit 1
 fi
 
+gcp_project_number=$(gcloud projects describe ${gcp_project_id} --format="value(projectNumber)");
 gcp_project_name=$(gcloud projects describe ${gcp_project_id} --format="value(name)");
+
+# Check is all required APIs were enabled
+gcp_iam_api_name="projects/${gcp_project_number}/services/iam.googleapis.com";
+gcp_deployment_manager_api_name="projects/${gcp_project_number}/services/deploymentmanager.googleapis.com";
+gcp_compute_engine_api_name="projects/${gcp_project_number}/services/compute.googleapis.com";
+gcp_cloud_resource_manager_api_name="projects/${gcp_project_number}/services/cloudresourcemanager.googleapis.com";
+
+if [[ -z $(gcloud services list --format="value(name)" --enabled --project=${gcp_project_id} --filter="name=${gcp_iam_api_name}") ]]; then
+	printf "${red}[ERROR] Identity and Access Management (IAM) API is not enabled${nc}\n";
+	printf "Please enable the IAM API with the following command: \"gcloud services enable iam.googleapis.com --project ${gcp_project_id}\"\n";
+	exit 1;
+fi
+
+if [[ -z $(gcloud services list --format="value(name)" --enabled --project=${gcp_project_id} --filter="name=${gcp_deployment_manager_api_name}") ]]; then
+	printf "${red}[ERROR] Deployment Manager API is not enabled${nc}\n";
+	printf "Please enable the Deployment Manager API with the following command: \"gcloud services enable deploymentmanager.googleapis.com --project ${gcp_project_id}\"\n";
+	exit 1;
+fi
+
+if [[ -z $(gcloud services list --format="value(name)" --enabled --project=${gcp_project_id} --filter="name=${gcp_compute_engine_api_name}") ]]; then
+	printf "${red}[ERROR] Compute Engine API is not enabled${nc}\n";
+	printf "Please enable the Compute Engine API with the following command: \"gcloud services enable compute.googleapis.com --project ${gcp_project_id}\"\n";
+	exit 1;
+fi
+
+if [[ -z $(gcloud services list --format="value(name)" --enabled --project=${gcp_project_id} --filter="name=${gcp_cloud_resource_manager_api_name}") ]]; then
+	printf "${red}[ERROR] Cloud Resource Manager API is not enabled${nc}\n";
+	printf "Please enable the Cloud Resource Manager API with the following command: \"gcloud services enable cloudresourcemanager.googleapis.com --project ${gcp_project_id}\"\n";
+	exit 1;
+fi
 
 if [[ ! -f ${cc_template_file} ]]; then
 	printf "${red}[ERROR] CloudCasa template file $cc_template_file does not exist${nc}\n";
