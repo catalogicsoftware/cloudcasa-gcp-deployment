@@ -128,7 +128,7 @@ def mark_cloudaccount_as_active(pd_support):
     cc_callback_body = {
         "project_id": f"{gcp_project_id}",
         "project_name": f"{gcp_project_name}",
-        "template_version": "1.0.0",
+        "template_version": "v1.0.1-dev",
         "deployment_name": deployment_name,
         "features": features
     }
