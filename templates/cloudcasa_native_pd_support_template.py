@@ -35,6 +35,7 @@ def GenerateConfig(context):
                     "container.clusterRoles.create",
                     "container.clusterRoles.escalate",
                     "container.operations.get",
+                    "compute.disks.list",
                     "compute.regions.get",
                     "compute.regions.list",
                     "compute.zones.get",

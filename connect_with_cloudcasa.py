@@ -34,7 +34,7 @@ def print_info(*args):
 cc_api_url = "https://api.staging.cloudcasa.io"
 templates_dir = Path(__file__).absolute().parent.joinpath("templates")
 timestamp = int(time.time())
-deployment_name = f"cloudcasa-deployment-{timestamp}"
+deployment_name = f"cloudcasa-deployment"
 
 required_gcloud_apis = {
     "iam": {
@@ -87,25 +87,36 @@ def validate_environment():
         print_error("CloudCasa Cloud Account ID is not given.", exit=False)
         print("Please run the script as follows: \"python3 connect_with_cloudcasa.py <cloudaccount-id>\"")
 
-def deploy_basic_cloudcasa_template():
+def deploy_basic_cloudcasa_template(deployment_exists=False):
     print_info("Deploying basic CloudCasa template...")
 
+    operation_type = "update" if deployment_exists else "create"
     template = templates_dir.joinpath("cloudcasa_base_gcp_template.py")
-    gcloud_cmd = f"gcloud deployment-manager deployments create {deployment_name} --template {template}"
+    gcloud_cmd = f"gcloud deployment-manager deployments {operation_type} {deployment_name} --template {template}"
     res = subprocess.run(gcloud_cmd, shell=True)
     if res.returncode != 0:
         print_error("The CloudCasa deployment has failed. Please check if all required APIs were enabled")
 
     print_success("Successfully deployed CloudCasa template.")
 
-def deploy_native_persistent_disk_support_template():
+def deploy_native_persistent_disk_support_template(deployment_exists=False):
     print_info("Deploying CloudCasa template with support for native Google Persistent Disk...")
 
+    operation_type = "update" if deployment_exists else "create"
     template = templates_dir.joinpath("cloudcasa_native_pd_support_template.py")
-    gcloud_cmd = f"gcloud deployment-manager deployments create {deployment_name} --template {template}"
+    gcloud_cmd = f"gcloud deployment-manager deployments {operation_type} {deployment_name} --template {template}"
     res = subprocess.run(gcloud_cmd, shell=True)
     if res.returncode != 0:
         print_error("The CloudCasa deployment with support for native Google Persistent Disk has failed. Please check if all required APIs were enabled")
+
+    # NOTE: Backward compatiblity only and it should be removed with version newer
+    # than v1.0.1
+    # Update the CloudCasa role with the compute.disks.list.
+    gcp_project_id = os.environ["DEVSHELL_PROJECT_ID"]
+    role_update_cmd = f"gcloud iam roles update CloudCasa --project={gcp_project_id} --add-permissions=compute.disks.list"
+    res = subprocess.run(role_update_cmd, shell=True, stdout=subprocess.DEVNULL)
+    if res.returncode != 0:
+        print_error("The CloudCasa deployment with support for native Google Persistent Disk has failed. Please add \"compute.disks.list\" permission to \"CloudCasa\" role manually")
 
     print_success("Successfully deployed CloudCasa template with support for native Google Persistent Disk.")
 
@@ -146,11 +157,19 @@ def main():
         print_error("Supported inputs are only \"y\" and \"n\".")
 
     support_native_gce_pd = True if support_native_gce_pd_input == "y" else False
+
+    # Check if deployments needs to be created or updated
+    deployment_exists = True
+    gcloud_cmd = f"gcloud deployment-manager deployments describe {deployment_name}"
+    res = subprocess.run(gcloud_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if res.returncode != 0:
+        deployment_exists = False
+
     # Deploy the right template
     if support_native_gce_pd:
-        deploy_native_persistent_disk_support_template()
+        deploy_native_persistent_disk_support_template(deployment_exists)
     else:
-        deploy_basic_cloudcasa_template()
+        deploy_basic_cloudcasa_template(deployment_exists)
 
     mark_cloudaccount_as_active(pd_support=support_native_gce_pd)
 
