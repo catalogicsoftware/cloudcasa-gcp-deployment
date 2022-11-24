@@ -149,6 +149,27 @@ def mark_cloudaccount_as_active(pd_support):
         print_error("The CloudCasa callback failed. Please contact our support at home.cloudcasa.io.")
     print_success("Successfully invoked CloudCasa callback. The Cloud Account should be marked as active soon.")
 
+def cleanup_old_deployments():
+    old_cc_deployments = []
+    gcloud_cmd = "gcloud deployment-manager deployments list --format=json | jq '.[] | .name' | grep 'cloudcasa-deployment-'"
+    try:
+        res = subprocess.check_output(gcloud_cmd, shell=True)
+        old_cc_deployments = res.decode("utf-8").replace('"', "").strip().split("\n")
+    except:
+        pass
+
+    if len(old_cc_deployments) > 0:
+        print_info("Deleting old CloudCasa deployments")
+    for i, cc_deployment in enumerate(old_cc_deployments):
+        print_info(f"({i+1}/{len(old_cc_deployments)}) Deleting old CloudCasa deployment \"{cc_deployment}\"")
+        delete_deployment_cmd = f"gcloud deployment-manager deployments delete {cc_deployment} --delete-policy=ABANDON --async"
+        res = subprocess.Popen(delete_deployment_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        res.communicate(input='y'.encode())[0]
+
+def undelete_cloudcasa_role(role_id: str):
+    gcloud_cmd = f"gcloud iam roles undelete {role_id} --project=cctest2-362614"
+    subprocess.run(gcloud_cmd, shell=True, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+
 def main():
     validate_environment()
 
@@ -158,6 +179,11 @@ def main():
 
     support_native_gce_pd = True if support_native_gce_pd_input == "y" else False
 
+    # NOTE: BACKWARD COMPATIBLITY
+    # From v1.0.1 we are using only one deployment. We need to clean up the deployments
+    # that were created before this one.
+    cleanup_old_deployments()
+
     # Check if deployments needs to be created or updated
     deployment_exists = True
     gcloud_cmd = f"gcloud deployment-manager deployments describe {deployment_name}"
@@ -165,8 +191,14 @@ def main():
     if res.returncode != 0:
         deployment_exists = False
 
+    # There might be a case where the user has deleted the deployment with resources.
+    # In such case, it might be possible that the roles needs to be "undeleted".
+    undelete_cloudcasa_role("CloudCasa")
+
     # Deploy the right template
     if support_native_gce_pd:
+        undelete_cloudcasa_role("CloudCasaNativePdSupportRole")
+        undelete_cloudcasa_role("CloudCasaNativePdSupportRole")
         deploy_native_persistent_disk_support_template(deployment_exists)
     else:
         deploy_basic_cloudcasa_template(deployment_exists)
